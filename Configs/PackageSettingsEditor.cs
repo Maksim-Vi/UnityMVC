@@ -1,16 +1,14 @@
 using System.IO;
 using UnityEditor;
 using UnityEngine;
-using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace Code.MVC.Configs
 {
     public class PackageSettingsWindow : EditorWindow
     {
         private PackageSettings _settings;
-        private string _settingsFolderPath;
-        private string _packageRoot;
         private string _manualPackagePath = "";
+        private string _settingsFolderPath;
 
         [MenuItem("MVC/Settings")]
         public static void ShowWindow()
@@ -21,36 +19,19 @@ namespace Code.MVC.Configs
 
         private void OnEnable()
         {
-            // Знаходимо шлях до скрипта
-            string scriptPath = AssetDatabase.GetAssetPath(MonoScript.FromScriptableObject(this));
-            var packageInfo = PackageInfo.FindForAssetPath(scriptPath);
-
-            if (packageInfo != null)
-            {
-                _packageRoot = packageInfo.resolvedPath;
-            }
-            else
-            {
-                // Якщо не знайдено, залишаємо порожній шлях для ручного введення
-                _packageRoot = "";
-            }
-
-            // Попередньо формуємо шлях до MVCSettings (ще не створюємо)
             UpdateSettingsFolderPath();
         }
 
         private void UpdateSettingsFolderPath()
         {
-            if (!string.IsNullOrEmpty(_packageRoot))
+            if (!string.IsNullOrEmpty(_manualPackagePath))
             {
-                _settingsFolderPath = Path.Combine(_packageRoot, "MVCSettings");
-            }
-            else if (!string.IsNullOrEmpty(_manualPackagePath))
-            {
+                // Користувацький шлях + MVCSettings
                 _settingsFolderPath = Path.Combine(_manualPackagePath, "MVCSettings");
             }
             else
             {
+                // Дефолтний шлях
                 _settingsFolderPath = Path.Combine("Assets", "MVCSettings");
             }
         }
@@ -59,33 +40,30 @@ namespace Code.MVC.Configs
         {
             EditorGUILayout.LabelField("MVC Package Settings", EditorStyles.boldLabel);
 
-            // Поточний шлях до пакета
-            EditorGUILayout.LabelField("Selected path for MVCSettings:", _settingsFolderPath);
+            EditorGUILayout.LabelField("Current path for MVCSettings:", _settingsFolderPath);
 
-            // Поле для ручного вводу шляху, якщо не підходить автоматичний
             EditorGUILayout.BeginHorizontal();
             _manualPackagePath = EditorGUILayout.TextField("Manual Package Path", _manualPackagePath);
+
             if (GUILayout.Button("Set Path"))
             {
                 if (!string.IsNullOrEmpty(_manualPackagePath))
-                {
-                    _packageRoot = _manualPackagePath;
                     UpdateSettingsFolderPath();
-                }
                 else
-                {
                     EditorUtility.DisplayDialog("Error", "Manual package path cannot be empty.", "OK");
-                }
+            }
+
+            if (GUILayout.Button("Reset to Default"))
+            {
+                _manualPackagePath = "";
+                UpdateSettingsFolderPath();
             }
             EditorGUILayout.EndHorizontal();
 
             GUILayout.Space(10);
 
-            // Поля для налаштувань (тимчасово редагуємо у пам’яті)
             if (_settings == null)
-            {
                 _settings = ScriptableObject.CreateInstance<PackageSettings>();
-            }
 
             _settings.useZenject = EditorGUILayout.Toggle("Use Zenject", _settings.useZenject);
             _settings.additionalOption = EditorGUILayout.TextField("Additional Option", _settings.additionalOption);
@@ -111,13 +89,11 @@ namespace Code.MVC.Configs
 
         private void ApplySettings(PackageSettings settings)
         {
-            // Перевіряємо і створюємо всі потрібні папки до MVCSettings
-            EnsureSettingsFolderExists(_settingsFolderPath);
+            // Перевіряємо та створюємо всю структуру папок до MVCSettings
+            EnsureFolderStructureExists(_settingsFolderPath);
 
-            // Формуємо шлях до asset
             string assetPath = Path.Combine(_settingsFolderPath, "PackageSettings.asset").Replace("\\", "/");
 
-            // Створюємо asset, якщо його ще немає
             var loadedSettings = AssetDatabase.LoadAssetAtPath<PackageSettings>(assetPath);
             if (loadedSettings == null)
             {
@@ -125,7 +101,7 @@ namespace Code.MVC.Configs
                 AssetDatabase.SaveAssets();
             }
 
-            // Застосовуємо define symbols
+            // Define symbols
             string defineSymbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
 
             if (settings.useZenject)
@@ -144,18 +120,17 @@ namespace Code.MVC.Configs
             Debug.Log("[PackageSettings] Settings applied at: " + _settingsFolderPath + "\nCurrent define symbols: " + defineSymbols);
         }
 
-// Метод для перевірки та створення всіх проміжних папок до MVCSettings
-        private void EnsureSettingsFolderExists(string fullPath)
+        // Метод створює всі папки по черзі, якщо їх нема
+        private void EnsureFolderStructureExists(string fullPath)
         {
             fullPath = fullPath.Replace("\\", "/");
             string[] folders = fullPath.Split('/');
-            string currentPath = folders[0]; // наприклад "Assets" або корінь пакета
 
+            string currentPath = folders[0]; // зазвичай "Assets"
             for (int i = 1; i < folders.Length; i++)
             {
                 string nextPath = currentPath + "/" + folders[i];
 
-                // Перевіряємо чи папка існує, якщо ні — створюємо
                 if (!AssetDatabase.IsValidFolder(nextPath))
                 {
                     AssetDatabase.CreateFolder(currentPath, folders[i]);
