@@ -2,7 +2,7 @@
   "name": "com.kastom.mvc",
   "displayName": "UnityMVC",
   "version": "1.0.1",
-  "unity": "6",
+  "unity": "2023.1",
   "description": "A clean, DI-friendly MVC micro-framework for Unity.",
   "keywords": ["mvc", "architecture", "zenject"],
   "author": {
