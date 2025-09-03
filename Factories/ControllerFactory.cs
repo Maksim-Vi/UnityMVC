@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using UnityEngine;
-#if ZENJECT
+#if MVC_USE_ZENJECT
 using Zenject;
 #endif
 
@@ -10,11 +10,11 @@ namespace Code.MVC
     {
         private readonly PlainControllerFactory _plainFactory = new PlainControllerFactory();
 
-    #if ZENJECT
+    #if MVC_USE_ZENJECT
         private readonly ZenjectControllerFactory _zenFactory;
     #endif
 
-#if ZENJECT
+#if MVC_USE_ZENJECT
     public ControllerFactory(DiContainer container)
     {
         _zenFactory = new ZenjectControllerFactory(container);
@@ -32,7 +32,7 @@ namespace Code.MVC
         public TController Create<TController>()
             where TController : class, IController, new()
         {
-    #if ZENJECT
+    #if MVC_USE_ZENJECT
             if (_zenFactory != null) return _zenFactory.Create<TController>();
     #endif
             return _plainFactory.Create<TController>();
@@ -46,7 +46,7 @@ namespace Code.MVC
             where TView : Component, IView
             where TModel : class, IModel, new()
         {
-    #if ZENJECT
+    #if MVC_USE_ZENJECT
             if (_zenFactory != null) return _zenFactory.Create<TController, TView, TModel>(view);
     #endif
             return _plainFactory.Create<TController, TView, TModel>(view);
@@ -60,7 +60,7 @@ namespace Code.MVC
             where TView : Component, IView
             where TModel : class, IModel, new()
         {
-    #if ZENJECT
+    #if MVC_USE_ZENJECT
             if (_zenFactory != null) return _zenFactory.Create<TController, TView, TModel, TData>(view, data);
     #endif
             return _plainFactory.Create<TController, TView, TModel, TData>(view, data);
@@ -74,7 +74,7 @@ namespace Code.MVC
             where TView : Component, IView
             where TModel : class, IModel, new()
         {
-    #if ZENJECT
+    #if MVC_USE_ZENJECT
             if (_zenFactory != null) return _zenFactory.CreateWithModel<TController, TView, TModel>(view, model);
     #endif
             return _plainFactory.CreateWithModel<TController, TView, TModel>(view, model);
@@ -86,7 +86,7 @@ namespace Code.MVC
         public Task<TController> CreateAsync<TController>()
             where TController : class, IController, new()
         {
-    #if ZENJECT
+    #if MVC_USE_ZENJECT
             if (_zenFactory != null) return _zenFactory.CreateAsync<TController>();
     #endif
             return _plainFactory.CreateAsync<TController>();
@@ -100,7 +100,7 @@ namespace Code.MVC
             where TView : Component, IView
             where TModel : class, IModel, new()
         {
-    #if ZENJECT
+    #if MVC_USE_ZENJECT
             if (_zenFactory != null) return _zenFactory.CreateAsync<TController, TView, TModel>(view);
     #endif
             return _plainFactory.CreateAsync<TController, TView, TModel>(view);
@@ -114,7 +114,7 @@ namespace Code.MVC
             where TView : Component, IView
             where TModel : class, IModel, new()
         {
-    #if ZENJECT
+    #if MVC_USE_ZENJECT
             if (_zenFactory != null) return _zenFactory.CreateAsync<TController, TView, TModel, TData>(view, data);
     #endif
             return _plainFactory.CreateAsync<TController, TView, TModel, TData>(view, data);
@@ -128,7 +128,7 @@ namespace Code.MVC
             where TView : Component, IView
             where TModel : class, IModel, new()
         {
-    #if ZENJECT
+    #if MVC_USE_ZENJECT
             if (_zenFactory != null) return _zenFactory.CreateWithModelAsync<TController, TView, TModel>(view, model);
     #endif
             return _plainFactory.CreateWithModelAsync<TController, TView, TModel>(view, model);
